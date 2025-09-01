@@ -1,22 +1,37 @@
 import { slugify } from '~/utils/formatters'
+import { boardModel } from '~/models/boardModel'
+import ApiError from '~/utils/ApiError'
+import { StatusCodes } from 'http-status-codes'
 
 const createNew = async (reqBody) => {
   try {
-    //xử lí logic dữ liệu tuỳ đặc thù dự án
     const newBoard = { ...reqBody, slug: slugify(reqBody.title) }
-    //gọi tới tầng Model để xử lí lưu bản ghi newBoard vào DB
-    //...
+    //Gọi tới tầng Model để xử lí lưu bản ghi newBoard vào DB
+    const createdBoard = await boardModel.createNew(newBoard)
 
-    //làm thêm các xử lí logic khác với các collection khác tuỳ đặc thù dự án,...
-    //bắn email, thông báo về admin khi có board mới được tạo,...
+    //Lấy bản ghi vừa tạo
+    const getNewBoard = await boardModel.findOneById(createdBoard.insertedId)
+    console.log('Found board: ', getNewBoard)
 
-    //trả về kết quả, Service luôn phải có Return
-    return newBoard
+    //Service luôn phải có Return
+    return getNewBoard
   } catch (error) {
-    throw error
+    throw new Error(error)
+  }
+}
+
+const getDetail = async (boardId) => {
+  try {
+    const board = await boardModel.getDetail(boardId)
+    if (!board) throw new ApiError(StatusCodes.NOT_FOUND, 'Board not found')
+
+    return board
+  } catch (error) {
+    throw new Error(error)
   }
 }
 
 export const boardService = {
   createNew,
+  getDetail,
 }
